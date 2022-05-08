@@ -1,7 +1,9 @@
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from bookogram.book import book
+from bookogram.books import books
+
+DELIMITER = '_'
 
 dp = Dispatcher()
 
@@ -16,36 +18,53 @@ def start(bot_token: str) -> None:
 
 @dp.message(commands=["start"])
 async def command_book_handler(message: Message) -> None:
-    """
-    This handler receive messages with `/start` command
-    """
     ikm = InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text='001', callback_data='001'),
-                InlineKeyboardButton(text='002', callback_data='002')
-            ]
+                InlineKeyboardButton(
+                    text=books.get(b).get("meta").get("title"),
+                    # TODO нужно придумать как находить первый параграф в книге
+                    callback_data=f"{b}{DELIMITER}001",
+                )
+                for b in books
+            ],
         ],
     )
 
-    await message.answer(f"Книга", reply_markup=ikm)
+    text = f"Выберите книгу."
+
+    await message.answer(text, reply_markup=ikm)
 
 
 @dp.callback_query()
 async def callback_handler(callback: CallbackQuery):
-    p = book.get(callback.data)
+    b, p = callback.data.split(DELIMITER, 1)
 
-    if p:
-        ikm = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(text=answer, callback_data=answer) for answer in p.get('answers')
-                ]
-            ],
-        )
+    book = books.get(b)
 
-        await callback.message.answer(f"<b>{p.get('num')}</b>\n\n{p.get('text')}", reply_markup=ikm)
+    if book:
+        paragraph = book.get('paragraphs').get(p)
+
+        if paragraph:
+            ikm = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=answer,
+                            callback_data=f"{b}_{answer}")
+                        for answer in paragraph.get('answers')
+                    ]
+                ],
+            )
+
+            result = f"<b>{paragraph.get('id')} | {book.get('meta').get('title')}</b>\n" \
+                     f"\n" \
+                     f"{paragraph.get('text')}";
+
+            await callback.message.answer(result, reply_markup=ikm)
+        else:
+            await callback.message.answer(f"⛔️️ Ошибка: параграф не найден.")
     else:
-        await callback.message.answer(f"⛔️️ Этот параграф пока не готов.")
+        await callback.message.answer(f"⛔️️ Ошибка: книга не найдена.")
 
     await callback.answer()
