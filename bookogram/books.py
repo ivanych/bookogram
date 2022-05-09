@@ -1,20 +1,8 @@
-books = {
-    "steelrat": {
-        "meta": {
-            "title": "Стань Cтальной Крысой",
-            "author": "Гарри Гаррисон",
-        },
-        "paragraphs": {
-            "001": {
-                "id": "001",
-                "text": "Начало",
-                "answers": ['001', '002'],
-            },
-            "002": {
-                "id": "002",
-                "text": "Продолжение",
-                "answers": ['001', '002', '003'],
-            },
-        },
-    },
-}
+import yaml
+
+# TODO Нужно сделать чтение из всех имеющихся файлов
+
+file_path = 'books/books.yml'
+
+with open(file_path, 'r') as file:
+    books = yaml.load(file, Loader=yaml.BaseLoader)

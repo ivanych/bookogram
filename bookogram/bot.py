@@ -24,7 +24,7 @@ async def command_book_handler(message: Message) -> None:
                 InlineKeyboardButton(
                     text=books.get(b).get("meta").get("title"),
                     # TODO нужно придумать как находить первый параграф в книге
-                    callback_data=f"{b}{DELIMITER}001",
+                    callback_data=f"{b}{DELIMITER}Добро пожаловать!",
                 )
                 for b in books
             ],
@@ -57,7 +57,7 @@ async def callback_handler(callback: CallbackQuery):
                 ],
             )
 
-            result = f"<b>{paragraph.get('id')} | {book.get('meta').get('title')}</b>\n" \
+            result = f"<b>{p} | {book.get('meta').get('title')}</b>\n" \
                      f"\n" \
                      f"{paragraph.get('text')}";
 
