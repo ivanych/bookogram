@@ -1,12 +1,14 @@
+import hashlib
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from bookogram.books import books
-from bookogram import paragraph
+from bookogram import books as Books, paragraph as Paragraph
 
 DELIMITER = '_'
 
 dp = Dispatcher()
+
+bindex = Books.load_books()
 
 
 def start(bot_token: str) -> None:
@@ -23,11 +25,10 @@ async def command_book_handler(message: Message) -> None:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=books.get(b).get("meta").get("title"),
-                    # TODO нужно придумать как находить первый параграф в книге
-                    callback_data=f"{b}{DELIMITER}Добро пожаловать!",
+                    text=bindex.get('books').get(bid).get("title"),
+                    callback_data=bindex.get('books').get(bid).get("entrance_sha"),
                 )
-                for b in books
+                for bid in bindex.get('books')
             ],
         ],
     )
@@ -39,28 +40,17 @@ async def command_book_handler(message: Message) -> None:
 
 @dp.callback_query()
 async def callback_handler(callback: CallbackQuery):
-    b, p = callback.data.split(DELIMITER, 1)
+    paragraph = bindex.get('paragraphs').get(callback.data)
 
-    book = books.get(b)
+    if paragraph:
+        ikm = Paragraph.answers_ikm(paragraph)
 
-    if book:
-        paragraph_dict = book.get('paragraphs').get(p)
+        result = f"<b>{paragraph.get('id')} | {bindex.get('books').get(paragraph.get('book_id')).get('title')}</b>\n" \
+                 f"\n" \
+                 f"{paragraph.get('text')}";
 
-        if paragraph_dict:
-            # TODO Хак с прицелом на дальнейшее использование классов
-            # В параграфе должны быть данные о книге, в том числе идентификатор книги
-            paragraph_dict['book_id'] = b
-
-            p_vs = paragraph.variants(paragraph_dict)
-
-            result = f"<b>{p} | {book.get('meta').get('title')}</b>\n" \
-                     f"\n" \
-                     f"{paragraph_dict.get('text')}";
-
-            await callback.message.answer(result, reply_markup=p_vs)
-        else:
-            await callback.message.answer(f"⛔️️ Ошибка: параграф не найден.")
+        await callback.message.answer(result, reply_markup=ikm)
     else:
-        await callback.message.answer(f"⛔️️ Ошибка: книга не найдена.")
+        await callback.message.answer(f"⛔️️ Ошибка: параграф не найден.")
 
     await callback.answer()
