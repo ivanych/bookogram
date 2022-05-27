@@ -2,7 +2,7 @@ import random
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-def variants(p: dict):
+def answers_ikm(p: dict):
     """
     Метод формирует кнопки выбора вариантов
 
@@ -11,25 +11,33 @@ def variants(p: dict):
     """
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            _random_variant(p) if p.get('random') == 'true' else _all_variants(p)
+            _random(p) if p.get('random') == 'true' else _all(p)
         ],
     )
 
 
-def _all_variants(p: dict):
+def _all(p: dict) -> list:
     return [
         InlineKeyboardButton(
-            text=variant_id,
-            callback_data=f"{p['book_id']}_{variant_id}"
+            text=answer.get('title'),
+            callback_data=answer.get('paragraph_sha')
         )
-        for variant_id in list(p.get('answers'))
+        for answer in list(p.get('answers'))
     ]
 
 
-def _random_variant(p: dict):
+def _random(p: dict) -> list:
     return [
         InlineKeyboardButton(
-            text='  🎲  '.join(list(p.get('answers'))),
-            callback_data=f"{p['book_id']}_{random.choice(list(p.get('answers')))}"
+            text='  🎲  '.join(
+                [
+                    answer.get('title') for answer in p.get('answers')
+                ]
+            ),
+            callback_data=random.choice(
+                [
+                    answer.get('paragraph_sha') for answer in p.get('answers')
+                ]
+            ),
         )
     ]
