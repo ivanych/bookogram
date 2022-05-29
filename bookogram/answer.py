@@ -13,4 +13,6 @@ def answer(answer_dict: dict, book_id: str) -> dict:
         'title': answer_dict.get('title'),
     }
 
+    print(f"├ answer = {answer}")
+
     return answer

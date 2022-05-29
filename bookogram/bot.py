@@ -1,14 +1,14 @@
-import hashlib
+import random
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from bookogram import books as Books, paragraph as Paragraph
+from bookogram import bindex as Bindex, paragraph as Paragraph
 
 DELIMITER = '_'
 
 dp = Dispatcher()
 
-bindex = Books.load_books()
+bindex = Bindex.load_books()
 
 
 def start(bot_token: str) -> None:
@@ -43,7 +43,7 @@ async def callback_handler(callback: CallbackQuery):
     paragraph = bindex.get('paragraphs').get(callback.data)
 
     if paragraph:
-        ikm = Paragraph.answers_ikm(paragraph)
+        ikm = _answers_ikm(paragraph)
 
         result = f"<b>{paragraph.get('id')} | {bindex.get('books').get(paragraph.get('book_id')).get('title')}</b>\n" \
                  f"\n" \
@@ -54,3 +54,44 @@ async def callback_handler(callback: CallbackQuery):
         await callback.message.answer(f"⛔️️ Ошибка: параграф не найден.")
 
     await callback.answer()
+
+
+def _answers_ikm(p: dict) -> InlineKeyboardMarkup:
+    """
+    Метод формирует кнопки выбора вариантов
+
+    :param p:
+    :return:
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            _random(p) if p.get('random') == 'true' else _all(p)
+        ],
+    )
+
+
+def _all(p: dict) -> list:
+    return [
+        InlineKeyboardButton(
+            text=answer.get('title'),
+            callback_data=answer.get('paragraph_sha')
+        )
+        for answer in list(p.get('answers'))
+    ]
+
+
+def _random(p: dict) -> list:
+    return [
+        InlineKeyboardButton(
+            text='  🎲  '.join(
+                [
+                    answer.get('title') for answer in p.get('answers')
+                ]
+            ),
+            callback_data=random.choice(
+                [
+                    answer.get('paragraph_sha') for answer in p.get('answers')
+                ]
+            ),
+        )
+    ]
